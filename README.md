@@ -62,3 +62,31 @@ can be deployed as-is to Netlify, Vercel, GitHub Pages, or any static host.
 Because routing is client-side, configure your host to redirect all paths to
 `index.html` (a `_redirects` file with `/* /index.html 200` works on Netlify;
 Vercel and GitHub Pages have their own equivalents).
+
+## Progressive Web App (installable)
+
+The site is a full PWA via `vite-plugin-pwa`: it ships a manifest, a service
+worker (auto-precaches all assets and updates itself), and an "Install App"
+button in the header that appears automatically on browsers that support
+install prompts (most Android/desktop Chrome/Edge; iOS Safari uses
+Share → Add to Home Screen instead, no button needed there).
+
+**Swapping in your real icon:** the icons currently in `public/icons/` are
+placeholders generated to match the site's logo mark. Once you have your
+real icon artwork, replace these four files (keep the exact filenames and
+sizes):
+
+| File                          | Size    | Used for                          |
+|--------------------------------|---------|------------------------------------|
+| `public/icons/icon-192.png`    | 192×192 | Standard app icon                  |
+| `public/icons/icon-512.png`    | 512×512 | Standard app icon (large)          |
+| `public/icons/icon-512-maskable.png` | 512×512 | Android adaptive icon — keep your logo within the center ~60% of the canvas, since Android crops this one to a circle/squircle |
+| `public/icons/apple-touch-icon.png`  | 180×180 | iOS home screen icon |
+
+Also replace `public/favicon.ico` (browser tab icon) if you want it to match.
+No code changes needed — just overwrite the files and rebuild.
+
+Note: PWA install prompts only fire over HTTPS (or `localhost` in dev), so
+test installability on your deployed URL, not by opening `dist/index.html`
+directly from disk.
+
