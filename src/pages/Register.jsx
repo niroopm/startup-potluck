@@ -26,14 +26,30 @@ export default function Register() {
   const navigate = useNavigate();
 
   function update(field, value) {
+    if (field === 'mobile') {
+      // Digits only, capped at 10.
+      value = value.replace(/\D/g, '').slice(0, 10);
+    }
     setForm(f => ({ ...f, [field]: value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!form.name.trim() || !/^\d{7,15}$/.test(form.mobile.trim())) {
-      setError('Please enter your name and a valid mobile number.');
+    if (!form.name.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
+    if (!/^\d{10}$/.test(form.mobile.trim())) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!form.city.trim()) {
+      setError('Please enter your city / place.');
+      return;
+    }
+    if (!form.role.trim()) {
+      setError('Please enter your role / profession.');
       return;
     }
     setSubmitting(true);
@@ -83,12 +99,25 @@ export default function Register() {
             <p className="fc-label">Join the Founder Table</p>
             <form onSubmit={handleSubmit}>
               <div className="field"><label>Full Name</label><input type="text" required placeholder="Rahul Sharma" value={form.name} onChange={e => update('name', e.target.value)} /></div>
-              <div className="field"><label>Mobile Number</label><input type="tel" required placeholder="9876543210" value={form.mobile} onChange={e => update('mobile', e.target.value)} /></div>
+              <div className="field">
+                <label>Mobile Number</label>
+                <input
+                  type="tel"
+                  required
+                  inputMode="numeric"
+                  pattern="\d{10}"
+                  maxLength={10}
+                  placeholder="9876543210"
+                  value={form.mobile}
+                  onChange={e => update('mobile', e.target.value)}
+                />
+                <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>{form.mobile.length}/10 digits</span>
+              </div>
               <div className="field"><label>Email</label><input type="email" placeholder="rahul@gmail.com" value={form.email} onChange={e => update('email', e.target.value)} /></div>
 
               <div className="field-row">
                 <div className="field"><label>Startup / Company</label><input type="text" placeholder="e.g. AgroLocal" value={form.company} onChange={e => update('company', e.target.value)} /></div>
-                <div className="field"><label>Role / Profession</label><input type="text" placeholder="e.g. Tech Founder / Dev" value={form.role} onChange={e => update('role', e.target.value)} /></div>
+                <div className="field"><label>Role / Profession</label><input type="text" required placeholder="e.g. Tech Founder / Dev" value={form.role} onChange={e => update('role', e.target.value)} /></div>
               </div>
 
               <div className="field">
@@ -104,7 +133,7 @@ export default function Register() {
               </div>
 
               <div className="field-row">
-                <div className="field"><label>City</label><input type="text" placeholder="Rajahmundry" value={form.city} onChange={e => update('city', e.target.value)} /></div>
+                <div className="field"><label>City / Place</label><input type="text" required placeholder="Rajahmundry" value={form.city} onChange={e => update('city', e.target.value)} /></div>
                 <div className="field"><label>Instagram</label><input type="text" placeholder="@yourhandle" value={form.instagram} onChange={e => update('instagram', e.target.value)} /></div>
               </div>
               <div className="field"><label>Website / App</label><input type="text" placeholder="yourstartup.com" value={form.website} onChange={e => update('website', e.target.value)} /></div>

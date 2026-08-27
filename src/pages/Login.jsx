@@ -13,7 +13,7 @@ export default function Login() {
   async function handleCheck(e) {
     e.preventDefault();
     setNotFound(false);
-    if (!/^\d{7,15}$/.test(mobile.trim())) { setNotFound(true); return; }
+    if (!/^\d{10}$/.test(mobile.trim())) { setNotFound(true); return; }
     setChecking(true);
     try {
       let found = null;
@@ -50,7 +50,14 @@ export default function Login() {
           <form onSubmit={handleCheck}>
             <div className="field">
               <label>Mobile Number</label>
-              <input type="tel" placeholder="9876543210" value={mobile} onChange={e => setMobile(e.target.value)} />
+              <input
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="9876543210"
+                value={mobile}
+                onChange={e => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              />
             </div>
             <button type="submit" className="btn btn-primary full" disabled={checking}>
               {checking ? 'Checking...' : 'Log In'}

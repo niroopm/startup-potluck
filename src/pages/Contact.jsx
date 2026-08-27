@@ -12,7 +12,7 @@ export default function Contact() {
     e.preventDefault();
     const subject = encodeURIComponent(`Message from ${form.name || 'Startup Potluck site'}`);
     const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`);
-    window.location.href = `mailto:info@hellolocal.me?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:potluck@hellolocal.me?subject=${subject}&body=${body}`;
     setSent(true);
   }
 
@@ -42,7 +42,7 @@ export default function Contact() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', textTransform: 'uppercase' }}>Email</p>
-                <a href="mailto:info@hellolocal.me" style={{ fontSize: 14, fontWeight: 600 }}>info@hellolocal.me</a>
+                <a href="mailto:potluck@hellolocal.me" style={{ fontSize: 14, fontWeight: 600 }}>potluck@hellolocal.me</a>
               </div>
               <div>
                 <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', textTransform: 'uppercase' }}>Instagram</p>

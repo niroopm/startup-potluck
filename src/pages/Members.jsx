@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { sheetListMembers } from '../lib/sheet.js';
 
 const DEMO_MEMBERS = [
-  { name: 'Rahul Sharma', company: 'AgroLocal', role: 'Tech Founder', need: 'Fundraising / Angel Pitch Prep' },
-  { name: 'Priya Menon', company: 'StitchWorks', role: 'Product Designer', need: 'Finding Co-founder / Tech Talent' },
-  { name: 'Kiran Babu', company: 'TownCart', role: 'Full-Stack Dev', need: 'Early Customer Feedback / Beta Users' },
-  { name: 'Sneha Reddy', company: 'EduNest', role: 'Founder', need: 'Mentorship & Guidance' },
-  { name: 'Arjun Varma', company: 'Freelance', role: 'Growth Marketer', need: 'Open Networking & Knowledge Sharing' },
-  { name: 'Divya Rao', company: 'LegalEase', role: 'Compliance Consultant', need: 'Legal & Business Compliance' }
+  { name: 'Rahul Sharma', company: 'AgroLocal', role: 'Tech Founder', need: 'Fundraising / Angel Pitch Prep', city: 'Rajahmundry', mobile: '9876543210' },
+  { name: 'Priya Menon', company: 'StitchWorks', role: 'Product Designer', need: 'Finding Co-founder / Tech Talent', city: 'Kakinada', mobile: '9123456780' },
+  { name: 'Kiran Babu', company: 'TownCart', role: 'Full-Stack Dev', need: 'Early Customer Feedback / Beta Users', city: 'Rajahmundry', mobile: '9988776655' },
+  { name: 'Sneha Reddy', company: 'EduNest', role: 'Founder', need: 'Mentorship & Guidance', city: 'Amalapuram', mobile: '9012345678' },
+  { name: 'Arjun Varma', company: 'Freelance', role: 'Growth Marketer', need: 'Open Networking & Knowledge Sharing', city: 'Rajahmundry', mobile: '9345678901' },
+  { name: 'Divya Rao', company: 'LegalEase', role: 'Compliance Consultant', need: 'Legal & Business Compliance', city: 'Vijayawada', mobile: '9765432109' }
 ];
 
 const COLORS = ['#6C3BFF', '#1E8A4C', '#B23A2E', '#4B21D6', '#8C6D1F', '#2A6C6C'];
@@ -20,6 +20,7 @@ export default function Members() {
   const [members, setMembers] = useState(DEMO_MEMBERS);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +34,18 @@ export default function Members() {
     });
     return () => { cancelled = true; };
   }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter(m => {
+      const haystack = [m.name, m.company, m.role, m.city, m.mobile]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [members, query]);
 
   return (
     <section>
@@ -50,24 +63,50 @@ export default function Members() {
           </div>
         )}
 
-        <div className="grid cols-3">
-          {members.map((m, i) => (
-            <div key={m.mobile || m.name + i} className="card" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              <div className="badge-avatar" style={{ background: COLORS[i % COLORS.length] }}>
-                {initials(m.name)}
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 14.5 }}>{m.name}</p>
-                <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>{m.role}{m.company ? ` · ${m.company}` : ''}</p>
-                {m.need && (
-                  <div className="tag-list">
-                    <span className="tag-item">{m.need}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        <div style={{ maxWidth: 480, margin: '0 auto 32px' }}>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Search Members</label>
+            <input
+              type="text"
+              placeholder="Search by name, company, location, contact, or role..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 8 }}>
+            {filtered.length} of {members.length} member{members.length === 1 ? '' : 's'} shown
+          </p>
         </div>
+
+        {filtered.length === 0 ? (
+          <div className="alert-warn" style={{ maxWidth: 480, margin: '0 auto' }}>
+            No members match "{query}". Try a different name, company, city, or role.
+          </div>
+        ) : (
+          <div className="grid cols-3">
+            {filtered.map((m, i) => (
+              <div key={m.mobile || m.name + i} className="card" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div className="badge-avatar" style={{ background: COLORS[i % COLORS.length] }}>
+                  {initials(m.name)}
+                </div>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: 14.5 }}>{m.name}</p>
+                  <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>{m.role}{m.company ? ` · ${m.company}` : ''}</p>
+                  {(m.city || m.mobile) && (
+                    <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
+                      {m.city}{m.city && m.mobile ? ' · ' : ''}{m.mobile}
+                    </p>
+                  )}
+                  {m.need && (
+                    <div className="tag-list">
+                      <span className="tag-item">{m.need}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
