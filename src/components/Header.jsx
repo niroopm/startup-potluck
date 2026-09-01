@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { usePwaInstall } from '../hooks/usePwaInstall.js';
 
 const LINKS = [
   { to: '/', label: 'Home' },
-  { to: '/events', label: 'RSVP' },
+  { to: '/rsvp', label: 'RSVP' },
+  // { to: '/events', label: 'Events' },
   { to: '/members', label: 'Members' },
   { to: '/register', label: 'Register' },
   { to: '/contact', label: 'Contact' }
@@ -13,6 +15,7 @@ const LINKS = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const { member, logout } = useAuth();
+  const { canInstall, promptInstall } = usePwaInstall();
 
   return (
     <header>
@@ -38,6 +41,9 @@ export default function Header() {
         </nav>
 
         <div className="nav-cta" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {canInstall && (
+            <button className="btn btn-ghost small" onClick={promptInstall}>Install App</button>
+          )}
           {member ? (
             <>
               <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Hi, {member.name?.split(' ')[0]}</span>
@@ -63,6 +69,9 @@ export default function Header() {
           <button className="btn btn-ghost small full" onClick={() => { logout(); setOpen(false); }}>Log out</button>
         ) : (
           <NavLink to="/login" className="btn btn-accent small full" onClick={() => setOpen(false)}>Login</NavLink>
+        )}
+        {canInstall && (
+          <button className="btn btn-ghost small full" onClick={() => { promptInstall(); setOpen(false); }}>Install App</button>
         )}
       </div>
     </header>

@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { sheetListMembers } from '../lib/sheet.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const DEMO_MEMBERS = [
-  { name: 'Rahul Sharma', company: 'AgroLocal', role: 'Tech Founder', need: 'Fundraising / Angel Pitch Prep', city: 'Rajahmundry', mobile: '9876543210' },
-  { name: 'Priya Menon', company: 'StitchWorks', role: 'Product Designer', need: 'Finding Co-founder / Tech Talent', city: 'Kakinada', mobile: '9123456780' },
-  { name: 'Kiran Babu', company: 'TownCart', role: 'Full-Stack Dev', need: 'Early Customer Feedback / Beta Users', city: 'Rajahmundry', mobile: '9988776655' },
-  { name: 'Sneha Reddy', company: 'EduNest', role: 'Founder', need: 'Mentorship & Guidance', city: 'Amalapuram', mobile: '9012345678' },
-  { name: 'Arjun Varma', company: 'Freelance', role: 'Growth Marketer', need: 'Open Networking & Knowledge Sharing', city: 'Rajahmundry', mobile: '9345678901' },
-  { name: 'Divya Rao', company: 'LegalEase', role: 'Compliance Consultant', need: 'Legal & Business Compliance', city: 'Vijayawada', mobile: '9765432109' }
+  {
+    name: 'Jowhar', company: 'AgroLocal', role: 'Tech Founder', city: 'Rajahmundry', mobile: '9876543210',
+    need: 'Fundraising / Angel Pitch Prep',
+    intro: 'Building a farm-to-door delivery app connecting 500+ farmers directly to households across the Godavari belt, cutting out three layers of middlemen.',
+    website: 'https://agrolocal.example.com', elite: 'Yes'
+  }
+  // Non-elite members are intentionally not shown here — this page is a
+  // curated portfolio showcase. The full member directory (elite and not)
+  // lives in the Admin page at /admin.
 ];
 
 const COLORS = ['#6C3BFF', '#1E8A4C', '#B23A2E', '#4B21D6', '#8C6D1F', '#2A6C6C'];
@@ -16,8 +21,22 @@ function initials(name) {
   return name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 }
 
+function colorFor(str) {
+  if (!str) return COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COLORS[Math.abs(hash) % COLORS.length];
+}
+
+function isElite(m) {
+  return ['yes', 'true', '1'].includes(String(m.elite || '').trim().toLowerCase());
+}
+
 export default function Members() {
-  const [members, setMembers] = useState(DEMO_MEMBERS);
+  const { member: loggedInMember } = useAuth();
+  const [allMembers, setAllMembers] = useState(DEMO_MEMBERS);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -27,7 +46,7 @@ export default function Members() {
     sheetListMembers().then(result => {
       if (cancelled) return;
       if (result.ok && result.members.length) {
-        setMembers(result.members);
+        setAllMembers(result.members);
         setIsLive(true);
       }
       setLoading(false);
@@ -35,25 +54,29 @@ export default function Members() {
     return () => { cancelled = true; };
   }, []);
 
+  const eliteMembers = useMemo(() => allMembers.filter(isElite), [allMembers]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(m => {
-      const haystack = [m.name, m.company, m.role, m.city, m.mobile]
+    if (!q) return eliteMembers;
+    return eliteMembers.filter(m => {
+      const haystack = [m.name, m.company, m.role, m.city, m.mobile, m.need, m.intro]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [members, query]);
+  }, [eliteMembers, query]);
 
   return (
     <section>
       <div className="max">
         <div className="flow-head">
-          <div className="eyebrow center"><span className="dot"></span>The Founder Table</div>
+          <div className="eyebrow center"><span className="dot"></span>⭐ Elite Portfolios</div>
           <h2 className="section-title">Community Members</h2>
-          <p className="section-lede center">Founders, developers, designers and students building in Rajahmundry.</p>
+          <p className="section-lede center">
+            A curated showcase of standout founders in the Startup Potluck community — what they're building, and where they're stuck.
+          </p>
         </div>
 
         {!loading && !isLive && (
@@ -63,44 +86,74 @@ export default function Members() {
           </div>
         )}
 
-        <div style={{ maxWidth: 480, margin: '0 auto 32px' }}>
+        {!loggedInMember && (
+          <div className="alert-info" style={{ maxWidth: 640, margin: '0 auto 24px', textAlign: 'center' }}>
+            🔒 <Link to="/login" style={{ fontWeight: 700, textDecoration: 'underline' }}>Log in</Link> to see members' contact numbers.
+          </div>
+        )}
+
+        <div style={{ maxWidth: 480, margin: '0 auto 28px' }}>
           <div className="field" style={{ marginBottom: 0 }}>
-            <label>Search Members</label>
+            <label>Search Elite Members</label>
             <input
               type="text"
-              placeholder="Search by name, company, location, contact, or role..."
+              placeholder="Search by name, company, location, contact, role, or what they're building..."
               value={query}
               onChange={e => setQuery(e.target.value)}
             />
           </div>
-          <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 8 }}>
-            {filtered.length} of {members.length} member{members.length === 1 ? '' : 's'} shown
+          <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 8, textAlign: 'center' }}>
+            {filtered.length} elite member{filtered.length === 1 ? '' : 's'} shown
           </p>
         </div>
 
         {filtered.length === 0 ? (
           <div className="alert-warn" style={{ maxWidth: 480, margin: '0 auto' }}>
-            No members match "{query}". Try a different name, company, city, or role.
+            {query ? `No elite members match "${query}".` : 'No elite members yet — mark members as Elite from the Admin page.'}
           </div>
         ) : (
-          <div className="grid cols-3">
+          <div className="grid cols-2">
             {filtered.map((m, i) => (
-              <div key={m.mobile || m.name + i} className="card" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div className="badge-avatar" style={{ background: COLORS[i % COLORS.length] }}>
-                  {initials(m.name)}
+              <div key={m.mobile || m.name + i} className="member-card member-card-elite">
+                <span className="member-elite-ribbon">⭐ ELITE MEMBER</span>
+
+                <div className="member-card-top">
+                  <div className="member-avatar" style={{ background: COLORS[i % COLORS.length] }}>
+                    {initials(m.name)}
+                  </div>
+                  <div>
+                    <p className="member-name">{m.name}</p>
+                    <p className="member-role">{m.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontWeight: 700, fontSize: 14.5 }}>{m.name}</p>
-                  <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>{m.role}{m.company ? ` · ${m.company}` : ''}</p>
-                  {(m.city || m.mobile) && (
-                    <p style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
-                      {m.city}{m.city && m.mobile ? ' · ' : ''}{m.mobile}
-                    </p>
+
+                <div className="member-meta">
+                  {m.company && (
+                    <span className="member-chip member-company" style={{ background: colorFor(m.company) }}>
+                      {m.company}
+                    </span>
                   )}
-                  {m.need && (
-                    <div className="tag-list">
-                      <span className="tag-item">{m.need}</span>
-                    </div>
+                  {m.city && <span className="member-chip">📍 {m.city}</span>}
+                  {m.need && <span className="member-chip">🎯 {m.need}</span>}
+                </div>
+
+                {m.intro && <p className="member-intro">{m.intro}</p>}
+
+                {m.website && (
+                  <a href={m.website.startsWith('http') ? m.website : `https://${m.website}`} target="_blank" rel="noopener noreferrer" className="member-website-link">
+                    🔗 View Portfolio / Website
+                  </a>
+                )}
+
+                <div className="member-contact">
+                  {loggedInMember ? (
+                    m.mobile ? (
+                      <a href={`tel:${m.mobile}`} className="member-contact-link">📞 {m.mobile}</a>
+                    ) : (
+                      <span className="member-contact-locked">No contact on file</span>
+                    )
+                  ) : (
+                    <span className="member-contact-locked">🔒 Log in to view contact</span>
                   )}
                 </div>
               </div>

@@ -14,7 +14,7 @@ export default function Footer() {
             <a href="https://hellolocal.me" target="_blank" rel="noopener noreferrer">🎟 HelloLocal — Rajahmundry ↗</a>
           </div>
         </div>
-        
+
         <div>
           <h5>Quick Links</h5>
           <a className="flink" href="/">Home</a>
@@ -22,12 +22,12 @@ export default function Footer() {
           <a className="flink" href="/members">Members</a>
           <a className="flink" href="/register">Register</a>
         </div>
-        
+
         <div>
           <h5>Connect</h5>
-          <a 
-            href="mailto:potluck@hellolocal.me" 
-            className="flink" 
+          <a
+            href="mailto:potluck@hellolocal.me"
+            className="flink"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6C3BFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -36,12 +36,12 @@ export default function Footer() {
             </svg>
             <span>potluck@hellolocal.me</span>
           </a>
-          
-          <a 
-            href="https://www.instagram.com/entrepreneur_summit_rjy" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flink" 
+
+          <a
+            href="https://www.instagram.com/entrepreneur_summit_rjy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flink"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6C3BFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -52,21 +52,21 @@ export default function Footer() {
             <span>entrepreneur_summit_rjy</span>
           </a>
         </div>
-        
+
         <div>
           <h5>Location & Timings</h5>
           <span className="flink">🌳 NTR Park: 1st & 3rd Sundays @ 5:00 PM</span>
           <span className="flink">🚪 Closed-Door: 2nd & 4th Sundays @ 10:30 AM</span>
         </div>
       </div>
-      
-      <div 
-        className="max" 
-        style={{ 
-          marginTop: 36, 
-          paddingTop: 20, 
-          borderTop: '1px solid rgba(250,246,236,.12)', 
-          fontSize: 12, 
+
+      <div
+        className="max"
+        style={{
+          marginTop: 36,
+          paddingTop: 20,
+          borderTop: '1px solid rgba(250,246,236,.12)',
+          fontSize: 12,
           color: 'rgba(250,246,236,.5)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -78,10 +78,10 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} Startup Potluck. Built by founders, for founders.</span>
         <span>
           Developed & maintained by{' '}
-          <a 
-            href="https://hellolocal.me" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <a
+            href="https://hellolocal.me"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}
           >
             HelloLocal

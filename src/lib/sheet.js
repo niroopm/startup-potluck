@@ -1,6 +1,5 @@
-// Same Google Apps Script backend used by the original single-page site.
-// Swap this URL if you redeploy the script.
-export const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxY3g4mEV2bH_UmixWxO1UpWJGTemki_Xw8d__GRPiWuyAjE8wv80vFSXcjv216VeZw/exec";
+
+export const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxhvepu1uceOPU7jkMpAHaaafL6-aeQwgT99PtcGvQfbJMBI0wVunOoCXwhuYolrngo/exec";
 
 export async function sheetPost(payload) {
   if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
@@ -28,11 +27,6 @@ export async function sheetGet(mobile, date) {
   }
 }
 
-// NOTE: the original Apps Script only supports single-member lookup by mobile
-// number, not a "list all members" endpoint. The Members page below calls this
-// helper first and falls back to demo data if the script doesn't support
-// `?action=list`. To make the Members directory fully live, add a `list`
-// action to the Apps Script that returns all registered rows as JSON.
 export async function sheetListMembers() {
   if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
   try {
@@ -43,4 +37,41 @@ export async function sheetListMembers() {
   } catch (err) {
     return { ok: false, reason: 'network-error', error: String(err) };
   }
+}
+
+
+export async function sheetListEvents(audience) {
+  if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
+  try {
+    let url = SHEET_ENDPOINT + '?action=events';
+    if (audience) url += '&audience=' + encodeURIComponent(audience);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && Array.isArray(data.events)) return { ok: true, events: data.events };
+    return { ok: false, reason: 'unsupported' };
+  } catch (err) {
+    return { ok: false, reason: 'network-error', error: String(err) };
+  }
+}
+
+export async function sheetAdminList(type, adminKey) {
+  if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
+  try {
+    const url = `${SHEET_ENDPOINT}?admin=1&key=${encodeURIComponent(adminKey)}&type=${encodeURIComponent(type)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data.error) return { ok: false, reason: 'unauthorized' };
+    if (data && data.ok && Array.isArray(data.rows)) return { ok: true, rows: data.rows };
+    return { ok: false, reason: 'unexpected-shape' };
+  } catch (err) {
+    return { ok: false, reason: 'network-error', error: String(err) };
+  }
+}
+
+export async function sheetUpdateMember({ adminKey, mobile, fields }) {
+  return sheetPost({ type: 'updateMember', adminKey, mobile, fields });
+}
+
+export async function sheetUpdateElite({ adminKey, mobile, elite }) {
+  return sheetUpdateMember({ adminKey, mobile, fields: { 'Elite Member': elite ? 'Yes' : 'No' } });
 }

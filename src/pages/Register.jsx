@@ -69,6 +69,13 @@ export default function Register() {
     };
     try {
       const result = await sheetPost({ type: 'registration', ...record });
+
+      if (result && result.error === 'duplicate') {
+        setError('This mobile number is already registered — log in instead.');
+        setSubmitting(false);
+        return;
+      }
+
       if (!result.ok) {
         localStorage.setItem('member:' + record.mobile, JSON.stringify(record));
       }
@@ -138,7 +145,14 @@ export default function Register() {
               </div>
               <div className="field"><label>Website / App</label><input type="text" placeholder="yourstartup.com" value={form.website} onChange={e => update('website', e.target.value)} /></div>
 
-              {error && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 10 }}>{error}</p>}
+              {error && (
+                <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 10 }}>
+                  {error}
+                  {error.includes('already registered') && (
+                    <> <Link to="/login" style={{ color: 'var(--purple)', fontWeight: 700, textDecoration: 'underline' }}>Go to Login →</Link></>
+                  )}
+                </p>
+              )}
               <button type="submit" className="btn btn-primary full" disabled={submitting}>
                 {submitting ? 'Submitting...' : 'Submit Registration'}
               </button>
@@ -152,7 +166,7 @@ export default function Register() {
               Your profile & startup problem ticket have been registered. You're ready to RSVP weekly!
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Link to="/events" className="btn btn-accent small">RSVP This Sunday</Link>
+              <Link to="/rsvp" className="btn btn-accent small">RSVP This Sunday</Link>
               <button className="btn btn-ghost small" onClick={() => navigate('/')}>Go Home</button>
             </div>
           </div>
