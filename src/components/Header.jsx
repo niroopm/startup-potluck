@@ -6,7 +6,7 @@ import { usePwaInstall } from '../hooks/usePwaInstall.js';
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/rsvp', label: 'RSVP' },
-  // { to: '/events', label: 'Events' },
+  { to: '/events', label: 'Events' },
   { to: '/members', label: 'Members' },
   { to: '/register', label: 'Register' },
   { to: '/contact', label: 'Contact' }

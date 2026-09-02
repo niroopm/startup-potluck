@@ -79,12 +79,12 @@ export default function Members() {
           </p>
         </div>
 
-        {!loading && !isLive && (
+        {/* {!loading && !isLive && (
           <div className="alert-info" style={{ maxWidth: 640, margin: '0 auto 32px' }}>
             Showing sample members — connect a "list" action on your Google Apps Script backend
             (see <code>src/lib/sheet.js</code>) to make this directory live from your registration sheet.
           </div>
-        )}
+        )} */}
 
         {!loggedInMember && (
           <div className="alert-info" style={{ maxWidth: 640, margin: '0 auto 24px', textAlign: 'center' }}>
