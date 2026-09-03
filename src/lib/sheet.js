@@ -1,4 +1,3 @@
-
 export const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxhvepu1uceOPU7jkMpAHaaafL6-aeQwgT99PtcGvQfbJMBI0wVunOoCXwhuYolrngo/exec";
 
 export async function sheetPost(payload) {
@@ -27,7 +26,6 @@ export async function sheetGet(mobile, date) {
   }
 }
 
-
 export async function sheetListMembers() {
   if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
   try {
@@ -39,7 +37,6 @@ export async function sheetListMembers() {
     return { ok: false, reason: 'network-error', error: String(err) };
   }
 }
-
 
 export async function sheetListEvents(audience) {
   if (!SHEET_ENDPOINT) return { ok: false, reason: 'no-endpoint' };
@@ -69,11 +66,14 @@ export async function sheetAdminList(type, adminKey) {
   }
 }
 
-
 export async function sheetUpdateMember({ adminKey, mobile, fields }) {
   return sheetPost({ type: 'updateMember', adminKey, mobile, fields });
 }
 
 export async function sheetUpdateElite({ adminKey, mobile, elite }) {
   return sheetUpdateMember({ adminKey, mobile, fields: { 'Elite Member': elite ? 'Yes' : 'No' } });
+}
+
+export async function sheetUpdateProfile({ mobile, fields }) {
+  return sheetPost({ type: 'updateProfile', mobile, fields });
 }

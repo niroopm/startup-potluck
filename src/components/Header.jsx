@@ -2,6 +2,24 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePwaInstall } from '../hooks/usePwaInstall.js';
+import { isProfileIncomplete } from '../lib/profileCompleteness.js';
+
+function GearIcon({ showDot }) {
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      {showDot && (
+        <span style={{
+          position: 'absolute', top: -3, right: -3, width: 7, height: 7,
+          borderRadius: '50%', background: '#B23A2E', border: '1.5px solid #fff'
+        }} />
+      )}
+    </span>
+  );
+}
 
 const LINKS = [
   { to: '/', label: 'Home' },
@@ -46,7 +64,18 @@ export default function Header() {
           )}
           {member ? (
             <>
-              <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Hi, {member.name?.split(' ')[0]}</span>
+              <NavLink
+                to="/profile"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  fontSize: 13, color: 'var(--ink)', fontWeight: 600,
+                  padding: '7px 12px', borderRadius: 999,
+                  border: '1.5px solid var(--rule)', background: '#fff'
+                }}
+              >
+                <GearIcon showDot={isProfileIncomplete(member)} />
+                Hi, {member.name?.split(' ')[0]}
+              </NavLink>
               <button className="btn btn-ghost small" onClick={logout}>Log out</button>
             </>
           ) : (
@@ -66,7 +95,13 @@ export default function Header() {
           <NavLink key={l.to} to={l.to} onClick={() => setOpen(false)}>{l.label}</NavLink>
         ))}
         {member ? (
-          <button className="btn btn-ghost small full" onClick={() => { logout(); setOpen(false); }}>Log out</button>
+          <>
+            <NavLink to="/profile" onClick={() => setOpen(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <GearIcon showDot={isProfileIncomplete(member)} />
+              My Profile
+            </NavLink>
+            <button className="btn btn-ghost small full" onClick={() => { logout(); setOpen(false); }}>Log out</button>
+          </>
         ) : (
           <NavLink to="/login" className="btn btn-accent small full" onClick={() => setOpen(false)}>Login</NavLink>
         )}
