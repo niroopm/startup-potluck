@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { sheetAdminList, sheetUpdateElite, sheetUpdateMember } from '../lib/sheet.js';
+import { sheetAdminList, sheetUpdateElite, sheetUpdateMember, sheetPost } from '../lib/sheet.js';
 
 const SESSION_KEY = 'potluck:adminKey';
 
@@ -12,6 +12,23 @@ const EDITABLE_FIELDS = [
   'Need From Community', 'Startup Problem Ticket', 'Problem Status',
   'Instagram', 'Website'
 ];
+
+// Fields for adding a brand-new member. Unlike editing, Mobile IS included
+// and required here — it's the account identifier being created.
+const NEW_MEMBER_FIELDS = [
+  { key: 'name', label: 'Full Name', required: true },
+  { key: 'mobile', label: 'Mobile Number', required: true, numeric: true },
+  { key: 'email', label: 'Email' },
+  { key: 'company', label: 'Startup / Company' },
+  { key: 'role', label: 'Role / Profession', required: true },
+  { key: 'city', label: 'City / Place', required: true },
+  { key: 'needFromCommunity', label: 'Looking For' },
+  { key: 'startupProblemTicket', label: 'Startup Hurdle', textarea: true },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'website', label: 'Website / App' }
+];
+
+const EMPTY_NEW_MEMBER = NEW_MEMBER_FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: '' }), {});
 
 function isElite(row) {
   return ['yes', 'true', '1'].includes(String(row['Elite Member'] || '').trim().toLowerCase());
@@ -34,6 +51,13 @@ export default function Admin() {
   const [editForm, setEditForm] = useState({});
   const [duplicateMobiles, setDuplicateMobiles] = useState([]);
 
+  // ---- Add-member state ----
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newMember, setNewMember] = useState(EMPTY_NEW_MEMBER);
+  const [addingMember, setAddingMember] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState('');
+
   async function attemptLogin(key) {
     setChecking(true);
     setAuthError('');
@@ -53,6 +77,11 @@ export default function Admin() {
     if (adminKey) attemptLogin(adminKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function refreshMembers() {
+    const result = await sheetAdminList('registrations', adminKey);
+    if (result.ok) setMembers(result.rows);
+  }
 
   useEffect(() => {
     if (!authed) return;
@@ -116,6 +145,54 @@ export default function Admin() {
     setSavingMobile(null);
   }
 
+  function updateNewMember(key, value, numeric) {
+    setAddError('');
+    setAddSuccess('');
+    setNewMember(f => ({ ...f, [key]: numeric ? value.replace(/\D/g, '').slice(0, 10) : value }));
+  }
+
+  function cancelAdd() {
+    setShowAddForm(false);
+    setNewMember(EMPTY_NEW_MEMBER);
+    setAddError('');
+  }
+
+  async function handleAddMember(e) {
+    e.preventDefault();
+    setAddError('');
+    setAddSuccess('');
+
+    if (!newMember.name.trim()) return setAddError('Please enter a name.');
+    if (!/^\d{10}$/.test(newMember.mobile.trim())) return setAddError('Please enter a valid 10-digit mobile number.');
+    if (!newMember.role.trim()) return setAddError('Please enter a role / profession.');
+    if (!newMember.city.trim()) return setAddError('Please enter a city / place.');
+
+    setAddingMember(true);
+    // Reuses the same 'registration' action the public form uses, so the
+    // backend's duplicate-mobile check applies here too.
+    const result = await sheetPost({
+      type: 'registration',
+      ...newMember,
+      problemStatus: 'Active / Open',
+      elite: 'No'
+    });
+    setAddingMember(false);
+
+    if (result && result.error === 'duplicate') {
+      setAddError('That mobile number is already registered.');
+      return;
+    }
+    if (!result || !result.ok) {
+      setAddError('Could not save this member — please try again.');
+      return;
+    }
+
+    setAddSuccess(`${newMember.name.trim()} added.`);
+    setNewMember(EMPTY_NEW_MEMBER);
+    setShowAddForm(false);
+    refreshMembers();
+  }
+
   const rsvpsByDate = useMemo(() => {
     const groups = {};
     for (const r of rsvps) {
@@ -174,14 +251,72 @@ export default function Admin() {
           </div>
         )}
 
-        <div className="pill-choice" style={{ marginBottom: 24 }}>
-          <button type="button" className={tab === 'members' ? 'selected' : ''} onClick={() => setTab('members')}>
-            Members ({members.length})
-          </button>
-          <button type="button" className={tab === 'rsvps' ? 'selected' : ''} onClick={() => setTab('rsvps')}>
-            RSVPs by Sunday
-          </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+          <div className="pill-choice">
+            <button type="button" className={tab === 'members' ? 'selected' : ''} onClick={() => setTab('members')}>
+              Members ({members.length})
+            </button>
+            <button type="button" className={tab === 'rsvps' ? 'selected' : ''} onClick={() => setTab('rsvps')}>
+              RSVPs by Sunday
+            </button>
+          </div>
+
+          {tab === 'members' && (
+            <button
+              type="button"
+              className={showAddForm ? 'btn btn-ghost small' : 'btn btn-accent small'}
+              onClick={() => (showAddForm ? cancelAdd() : setShowAddForm(true))}
+            >
+              {showAddForm ? 'Cancel' : '+ Add Member'}
+            </button>
+          )}
         </div>
+
+        {addSuccess && (
+          <div className="alert-info" style={{ marginBottom: 20 }}>✓ {addSuccess}</div>
+        )}
+
+        {tab === 'members' && showAddForm && (
+          <div className="flow-card" style={{ marginBottom: 24 }}>
+            <p className="fc-label">Add a Member Manually</p>
+            <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginBottom: 16 }}>
+              For people who can't register themselves — they'll be able to log in afterwards with the mobile number you enter here.
+            </p>
+            <form onSubmit={handleAddMember}>
+              <div className="grid cols-2" style={{ gap: 12, marginBottom: 14 }}>
+                {NEW_MEMBER_FIELDS.map(f => (
+                  <div className="field" key={f.key} style={{ marginBottom: 0 }}>
+                    <label>{f.label}{f.required ? ' *' : ''}</label>
+                    {f.textarea ? (
+                      <textarea
+                        rows={2}
+                        value={newMember[f.key]}
+                        onChange={e => updateNewMember(f.key, e.target.value, f.numeric)}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        inputMode={f.numeric ? 'numeric' : undefined}
+                        maxLength={f.numeric ? 10 : undefined}
+                        value={newMember[f.key]}
+                        onChange={e => updateNewMember(f.key, e.target.value, f.numeric)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {addError && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 10 }}>{addError}</p>}
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="submit" className="btn btn-primary small" disabled={addingMember}>
+                  {addingMember ? 'Saving...' : 'Add Member'}
+                </button>
+                <button type="button" className="btn btn-ghost small" onClick={cancelAdd}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {loadingData && <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>Loading...</p>}
 
