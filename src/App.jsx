@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
+import Celebration from './components/Celebration.jsx';
 import Home from './pages/Home.jsx';
 import Register from './pages/Register.jsx';
 import Login from './pages/Login.jsx';
@@ -14,6 +15,7 @@ import Admin from './pages/Admin.jsx';
 export default function App() {
   return (
     <>
+      <Celebration />
       <Header />
       <main>
         <Routes>

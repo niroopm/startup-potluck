@@ -37,13 +37,15 @@ function isElite(row) {
 export default function Admin() {
   const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem(SESSION_KEY) || '');
   const [keyInput, setKeyInput] = useState('');
+  const [showKey, setShowKey] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  const [tab, setTab] = useState('members'); // 'members' | 'rsvps'
+  const [tab, setTab] = useState('members'); // 'members' | 'rsvps' | 'bommala'
   const [members, setMembers] = useState([]);
   const [rsvps, setRsvps] = useState([]);
+  const [bommala, setBommala] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
   const [savingMobile, setSavingMobile] = useState(null);
 
@@ -87,12 +89,13 @@ export default function Admin() {
     if (!authed) return;
     let cancelled = false;
     setLoadingData(true);
-    const type = tab === 'members' ? 'registrations' : 'rsvps';
+    const type = { members: 'registrations', rsvps: 'rsvps', bommala: 'bommalapelli' }[tab];
     sheetAdminList(type, adminKey).then(result => {
       if (cancelled) return;
       if (result.ok) {
         if (tab === 'members') setMembers(result.rows);
-        else setRsvps(result.rows);
+        else if (tab === 'rsvps') setRsvps(result.rows);
+        else setBommala(result.rows);
       }
       setLoadingData(false);
     });
@@ -223,7 +226,35 @@ export default function Admin() {
             <form onSubmit={e => { e.preventDefault(); attemptLogin(keyInput); }}>
               <div className="field">
                 <label>Admin Key</label>
-                <input type="password" value={keyInput} onChange={e => setKeyInput(e.target.value)} placeholder="Enter admin key" />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={keyInput}
+                    onChange={e => setKeyInput(e.target.value)}
+                    placeholder="Enter admin key"
+                    style={{ paddingRight: 36 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(s => !s)}
+                    aria-label={showKey ? 'Hide admin key' : 'Show admin key'}
+                    style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', color: 'var(--ink-soft)' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      {showKey ? (
+                        <>
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <path d="M1 1l22 22" />
+                        </>
+                      ) : (
+                        <>
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </>
+                      )}
+                    </svg>
+                  </button>
+                </div>
               </div>
               {authError && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 10 }}>{authError}</p>}
               <button type="submit" className="btn btn-primary full" disabled={checking}>
@@ -258,6 +289,9 @@ export default function Admin() {
             </button>
             <button type="button" className={tab === 'rsvps' ? 'selected' : ''} onClick={() => setTab('rsvps')}>
               RSVPs by Sunday
+            </button>
+            <button type="button" className={tab === 'bommala' ? 'selected' : ''} onClick={() => setTab('bommala')}>
+              Bommala Pelli{tab === 'bommala' ? ` (${bommala.length})` : ''}
             </button>
           </div>
 
@@ -453,6 +487,38 @@ export default function Admin() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {tab === 'bommala' && !loadingData && (
+          <div className="card" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 10.5, textTransform: 'uppercase' }}>
+                  <th style={{ padding: '4px 8px 8px 0' }}>Registered</th>
+                  <th style={{ padding: '4px 8px' }}>Name</th>
+                  <th style={{ padding: '4px 8px' }}>Mobile</th>
+                  <th style={{ padding: '4px 8px' }}>Email</th>
+                  <th style={{ padding: '4px 8px' }}>City</th>
+                  <th style={{ padding: '4px 8px' }}>Attendees</th>
+                  <th style={{ padding: '4px 8px' }}>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bommala.map((r, i) => (
+                  <tr key={r['Mobile'] + '-' + i} style={{ borderTop: '1px dotted var(--rule)' }}>
+                    <td style={{ padding: '6px 8px 6px 0', color: 'var(--ink-soft)' }}>{r['Timestamp']}</td>
+                    <td style={{ padding: '6px 8px', fontWeight: 600 }}>{r['Name']}</td>
+                    <td style={{ padding: '6px 8px', fontFamily: 'var(--font-mono)' }}>{r['Mobile']}</td>
+                    <td style={{ padding: '6px 8px' }}>{r['Email']}</td>
+                    <td style={{ padding: '6px 8px' }}>{r['City']}</td>
+                    <td style={{ padding: '6px 8px' }}>{r['Attendees']}</td>
+                    <td style={{ padding: '6px 8px' }}>{r['Note']}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {bommala.length === 0 && <p style={{ padding: 20, fontSize: 13, color: 'var(--ink-faint)' }}>No Bommala Pelli registrations yet.</p>}
           </div>
         )}
       </div>

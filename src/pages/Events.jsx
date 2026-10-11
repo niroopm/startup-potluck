@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getEvents, getEventImageUrl } from '../lib/events.js';
+import BommalaPelliForm from '../components/BommalaPelliForm.jsx';
 
 const DEMO_EVENTS = [
   {
@@ -130,6 +131,16 @@ export default function Events() {
             )}
           </>
         )}
+
+        <div style={{ marginTop: 48 }}>
+          <div className="flow-head">
+            <h2 className="section-title">Bommala Pelli</h2>
+            <p className="section-lede center">Reserve your spot — fill in the form below.</p>
+          </div>
+          <div style={{ maxWidth: 640, margin: '0 auto' }}>
+            <BommalaPelliForm />
+          </div>
+        </div>
       </div>
     </section>
   );

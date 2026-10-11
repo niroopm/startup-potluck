@@ -83,10 +83,10 @@ const PARTNERS = [
 
 export default function Home() {
   const info = getUpcomingSundayDetails();
-  const members = useCountUp(125);
-  const meetups = useCountUp(20);
-  const founders = useCountUp(2);
-  const ideas = useCountUp(74);
+  const members = useCountUp(140);
+  const meetups = useCountUp(25);
+  const founders = useCountUp(3);
+  const ideas = useCountUp(88);
 
   return (
     <>
