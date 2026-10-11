@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUpcomingSundays, getOrdinal } from '../lib/calendar.js';
 import { sheetPost } from '../lib/sheet.js';
+import { payForSession } from '../lib/razorpay.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const TOPICS = ['Funding', 'AI', 'Marketing', 'Product', 'Legal', 'Open Networking', 'Other'];
@@ -15,15 +16,37 @@ export default function Rsvp() {
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [payError, setPayError] = useState('');
+  const [paymentId, setPaymentId] = useState('');
 
   const selected = sundays[selectedIdx];
 
   async function handleSubmit() {
     if (!member || selected.isNoEvent) return;
     setSubmitting(true);
+    setPayError('');
+
+    let paid = null;
+    if (!selected.isOutdoor && attend === 'yes') {
+      paid = await payForSession({ member, date: selected.dateString });
+      if (!paid.ok) {
+        const msgs = {
+          'not-configured': 'Online payment is not set up yet. Please contact the organisers.',
+          'script-blocked': 'Could not load the payment window. Check your connection or ad-blocker and retry.',
+          'order-failed': 'Could not start the payment. Please try again.',
+          'verify-failed': 'Payment could not be verified. If money was debited, contact us with your mobile number.',
+          dismissed: 'Payment cancelled. Your RSVP was not submitted.',
+          failed: 'Payment failed. Your RSVP was not submitted.'
+        };
+        setPayError(msgs[paid.reason] || 'Payment did not complete.');
+        setSubmitting(false);
+        return;
+      }
+      setPaymentId(paid.paymentId);
+    }
     const sessionTag = selected.isOutdoor
       ? 'Outdoor Free Session (5:00 PM)'
-      : (attend === 'yes' ? 'Closed-Door Pass ₹150 (10:30 AM)' : 'Declined Attendance');
+      : (attend === 'yes' ? 'Closed-Door Pass ₹150 PAID (10:30 AM)' : 'Declined Attendance');
     try {
       await sheetPost({
         type: 'rsvp',
@@ -33,7 +56,9 @@ export default function Rsvp() {
         topic,
         discussionTopic: note,
         sessionFormat: sessionTag,
-        date: selected.dateString
+        date: selected.dateString,
+        paymentId: paid?.paymentId || '',
+        orderId: paid?.orderId || ''
       });
     } catch {
       /* localStorage fallback handled server-side in original; keep silent here */
@@ -80,7 +105,7 @@ export default function Rsvp() {
           {sundays.map((s, i) => (
             <button
               key={s.dateString}
-              onClick={() => { setSelectedIdx(i); setDone(false); }}
+              onClick={() => { setSelectedIdx(i); setDone(false); setPayError(''); setPaymentId(''); }}
               className="card"
               style={{
                 textAlign: 'left', cursor: 'pointer',
@@ -130,14 +155,10 @@ export default function Rsvp() {
               </p>
             </div>
 
-            {!selected.isOutdoor && (
+            {!selected.isOutdoor && attend === 'yes' && (
               <div style={{ background: '#fff', border: '1.5px solid var(--purple)', borderRadius: 12, padding: 18, textAlign: 'center', marginBottom: 18 }}>
                 <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--purple)', marginBottom: 6 }}>🎟️ Closed-Door Session Pass (₹150)</p>
-                <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi%3A%2F%2Fpay%3Fpa%3Djoharkrishna%40ybl%26pn%3DStartup%2520Potluck%26am%3D150%26cu%3DINR"
-                  alt="UPI QR Code" style={{ width: 130, height: 130, margin: '0 auto 8px', borderRadius: 6, border: '1px solid var(--rule)' }}
-                />
-                <p style={{ fontSize: 11.5, color: 'var(--ink-faint)' }}>UPI ID: joharkrishna@ybl</p>
+                <p style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Pay securely with UPI, card or netbanking when you confirm below.</p>
               </div>
             )}
 
@@ -159,8 +180,10 @@ export default function Rsvp() {
               <textarea rows={2} placeholder="Share your thoughts or questions..." value={note} onChange={e => setNote(e.target.value)} />
             </div>
 
+            {payError && <div className="alert-info" style={{ marginBottom: 12 }}>{payError}</div>}
+
             <button className="btn btn-primary full" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Submitting...' : (selected.isOutdoor ? 'Submit General RSVP (Free)' : 'Confirm Pass & Submit RSVP')}
+              {submitting ? 'Processing...' : (selected.isOutdoor ? 'Submit General RSVP (Free)' : (attend === 'yes' ? 'Pay ₹150 & Confirm RSVP' : 'Submit RSVP'))}
             </button>
           </div>
         ) : (
@@ -171,7 +194,8 @@ export default function Rsvp() {
             <div style={{ background: 'var(--paper)', padding: 12, borderRadius: 8, border: '1px solid var(--rule)', textAlign: 'left', fontSize: 12.5 }}>
               <p style={{ marginBottom: 4 }}><span style={{ color: 'var(--ink-faint)' }}>Session:</span> <strong>{selected.isOutdoor ? 'Outdoor Park (5:00 PM)' : 'Closed-Door (10:30 AM)'}</strong></p>
               <p style={{ marginBottom: 4 }}><span style={{ color: 'var(--ink-faint)' }}>Attending:</span> <strong>{attend === 'yes' ? 'Yes' : 'No'}</strong></p>
-              <p><span style={{ color: 'var(--ink-faint)' }}>Pass Cost:</span> <strong>{selected.isOutdoor ? 'Free' : '₹150'}</strong></p>
+              <p style={{ marginBottom: paymentId ? 4 : 0 }}><span style={{ color: 'var(--ink-faint)' }}>Pass Cost:</span> <strong>{selected.isOutdoor ? 'Free' : '₹150'}</strong></p>
+              {paymentId && <p><span style={{ color: 'var(--ink-faint)' }}>Payment ID:</span> <strong>{paymentId}</strong></p>}
             </div>
           </div>
         )}

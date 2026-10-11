@@ -90,3 +90,19 @@ Note: PWA install prompts only fire over HTTPS (or `localhost` in dev), so
 test installability on your deployed URL, not by opening `dist/index.html`
 directly from disk.
 
+
+## Payments (Razorpay)
+
+The ₹150 closed-door pass is paid via Razorpay Checkout on `/rsvp`. Orders are
+created and signatures verified in the Apps Script (the key secret never
+reaches the browser). Setup:
+
+1. Create a Razorpay account at razorpay.com, use **Test Mode** first, and
+   generate API keys (Account & Settings → API Keys).
+2. Copy `.env.example` to `.env` and set `VITE_RAZORPAY_KEY_ID` (key id only).
+3. Add `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` as Script Properties in Apps
+   Script, paste in `docs/apps-script-razorpay.gs`, wire the two `type`
+   handlers into `doPost`, and redeploy a **new version**.
+4. On your host (Netlify/Vercel), set `VITE_RAZORPAY_KEY_ID` as an env var.
+5. Test with Razorpay test UPI/card details, then complete KYC and swap in
+   live keys.
